@@ -241,6 +241,23 @@ def ks_test(timeseries):
 
     return False
 
+@analyzer
+def higher_than_previous_highest(timeseries):
+    series = pandas.Series([x[1] for x in timeseries])
+    max_value = series.max()
+    tail_average = tail_avg(timeseries)
+
+    if tail_average >= max_value
+        return True
+
+@analyzer
+def lower_than_previous_lowest(timeseries):
+    series = pandas.Series([x[1] for x in timeseries])
+    max_value = series.min()
+    tail_average = tail_avg(timeseries)
+
+    if tail_average <= max_value
+        return True
 
 def is_anomalously_anomalous(metric_name, ensemble, datapoint):
     """
