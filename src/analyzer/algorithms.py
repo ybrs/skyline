@@ -1,3 +1,7 @@
+import sys
+from os.path import dirname, abspath, isdir
+sys.path.insert(0, dirname(dirname(abspath(__file__))))
+
 import pandas
 import numpy as np
 import scipy
@@ -47,7 +51,16 @@ def tail_avg(timeseries):
     except IndexError:
         return timeseries[-1][1]
 
+analyzers = []
 
+def analyzer(fn):
+    def wrap(fn):
+        fn()
+    analyzers.append(fn)
+    return wrap
+
+
+@analyzer
 def median_absolute_deviation(timeseries):
     """
     A timeseries is anomalous if the deviation of its latest datapoint with
@@ -71,7 +84,7 @@ def median_absolute_deviation(timeseries):
     if test_statistic > 6:
         return True
 
-
+@analyzer
 def grubbs(timeseries):
     """
     A timeseries is anomalous if the Z score is greater than the Grubb's score.
@@ -89,7 +102,7 @@ def grubbs(timeseries):
 
     return z_score > grubbs_score
 
-
+@analyzer
 def first_hour_average(timeseries):
     """
     Calcuate the simple average over one hour, FULL_DURATION seconds ago.
@@ -104,7 +117,7 @@ def first_hour_average(timeseries):
 
     return abs(t - mean) > 3 * stdDev
 
-
+@analyzer
 def stddev_from_average(timeseries):
     """
     A timeseries is anomalous if the absolute value of the average of the latest
@@ -119,7 +132,7 @@ def stddev_from_average(timeseries):
 
     return abs(t - mean) > 3 * stdDev
 
-
+@analyzer
 def stddev_from_moving_average(timeseries):
     """
     A timeseries is anomalous if the absolute value of the average of the latest
@@ -133,7 +146,7 @@ def stddev_from_moving_average(timeseries):
 
     return abs(series.iget(-1) - expAverage.iget(-1)) > 3 * stdDev.iget(-1)
 
-
+@analyzer
 def mean_subtraction_cumulation(timeseries):
     """
     A timeseries is anomalous if the value of the next datapoint in the
@@ -148,7 +161,7 @@ def mean_subtraction_cumulation(timeseries):
 
     return abs(series.iget(-1)) > 3 * stdDev
 
-
+@analyzer
 def least_squares(timeseries):
     """
     A timeseries is anomalous if the average of the last three datapoints
@@ -175,7 +188,7 @@ def least_squares(timeseries):
 
     return abs(t) > std_dev * 3 and round(std_dev) != 0 and round(t) != 0
 
-
+@analyzer
 def histogram_bins(timeseries):
     """
     A timeseries is anomalous if the average of the last three datapoints falls
@@ -202,7 +215,7 @@ def histogram_bins(timeseries):
 
     return False
 
-
+@analyzer
 def ks_test(timeseries):
     """
     A timeseries is anomalous if 2 sample Kolmogorov-Smirnov test indicates
@@ -299,3 +312,14 @@ def run_selected_algorithm(timeseries, metric_name):
     except:
         logging.error("Algorithm error: " + traceback.format_exc())
         return False, [], 1
+
+if __name__ == '__main__':
+    from time import time
+    ts = time()
+    timeseries = map(list, zip(map(float, range(int(ts) - 86400, int(ts) + 1)), [1] * 86401))
+    timeseries[-1][1] = 0
+    timeseries[-2][1] = 1
+    timeseries[-3][1] = 1
+
+    for fn in analyzers:
+        print fn.__name__, fn(timeseries)
