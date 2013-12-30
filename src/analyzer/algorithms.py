@@ -247,8 +247,9 @@ def higher_than_previous_highest(timeseries):
     max_value = series.max()
     tail_average = tail_avg(timeseries)
 
-    if tail_average >= max_value
+    if tail_average >= max_value:
         return True
+    return False
 
 @analyzer
 def lower_than_previous_lowest(timeseries):
@@ -256,8 +257,9 @@ def lower_than_previous_lowest(timeseries):
     max_value = series.min()
     tail_average = tail_avg(timeseries)
 
-    if tail_average <= max_value
+    if tail_average <= max_value:
         return True
+    return False
 
 def is_anomalously_anomalous(metric_name, ensemble, datapoint):
     """
